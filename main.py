@@ -10,6 +10,7 @@ from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
 
+from tqdm import tqdm
 
 import numpy as np
 import pandas as pd
@@ -70,10 +71,13 @@ def plot_results(results, titles, x_ticks, window_title,param_name):
         # Explicitly set tick locations to match the number of tick labels
         tick_positions = range(1, len(x_ticks) + 1)
         ax.set_xticks(tick_positions)
-        ax.set_xticklabels([f"{param_name}={p}" for p in x_ticks]) 
+        ax.set_xticklabels([f"{p}" for p in x_ticks]) 
+        ax.set_xlabel(param_name)
 
     fig.suptitle(window_title, fontsize=16)
     plt.tight_layout()
+
+    plt.savefig(f"results/{window_title.replace(' ', '_')}.png", bbox_inches='tight')
 
 
 def main():
@@ -125,13 +129,14 @@ def main():
 
     repeat_amount = 5
 
-    for name, clf_info in classifiers.items():
-        results = run_experiment(clf_info["classifier"],clf_info["params"],datasets,repeat_amount)
+    classifiers_list = list(classifiers.items())
+    for i, (name, clf_info) in enumerate(tqdm(classifiers_list, desc="Classifiers")):
+        results = run_experiment(clf_info["classifier"], clf_info["params"], datasets, repeat_amount)
         plot_results(results, [dataset[0] for dataset in datasets], [list(p.values())[0] for p in clf_info["params"]], name, clf_info["param_name"])
-        print(f"Finished {clf_info['classifier']}")
+        tqdm.write(f"Finished {clf_info['classifier']}")
 
 
-    plt.show()
+    ##plt.show()
 
 
 if __name__ == '__main__':
