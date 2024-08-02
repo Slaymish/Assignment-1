@@ -29,3 +29,16 @@
 | Gradient Boosting | ![Gradient Boosting Plot](results/Gradient_Boosting.png) |
 | Random Forest | ![Random Forest Plot](results/Random_Forest.png) |
 | MLP | ![MLP Plot](results/MLP.png) |
+
+
+
+
+| **Classifier** | **Plot** |
+| --- | --- |
+| KNN | ![KNN Plot](results/KNN.png) |
+| Gaussian NB | ![Gaussian NB Plot](results/Gaussian_NB.png) |
+| Decision Tree | ![Decision Tree Plot](results/Decision_Tree.png) |
+| Logistic Regression | ![Logistic Regression Plot](results/Logistic_Regression.png) |
+| Gradient Boosting | ![Gradient Boosting Plot](results/Gradient_Boosting.png) |
+| Random Forest | ![Random Forest Plot](results/Random_Forest.png) |
+| MLP | ![MLP Plot](results/MLP.png) |
