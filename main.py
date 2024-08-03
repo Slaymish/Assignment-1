@@ -45,42 +45,39 @@ def run_classifier(classifier, path, param, state):
     X_train, X_test, y_train, y_test = train_test_split(features, classes, test_size=0.5, random_state=state)
     clf = classifier(**param)
     clf.fit(X_train, y_train)
-    return calculate_accuracy(clf.predict(X_test), y_test)
+    predictions = clf.predict(X_test)
+    accuracy = calculate_accuracy(predictions, y_test)
+    return predictions, accuracy, param
 
 def run_experiment(classifier, params, datasets, repeat_amount):
-    results = {dataset[0]: [[] for _ in params] for dataset in datasets}
+    results = {dataset[0]: {tuple(param.items()): [] for param in params} for dataset in datasets}
 
     for i, param in enumerate(params):
         for dataset in datasets:
             for s in range(repeat_amount):
-                accuracy = run_classifier(classifier, dataset[1], param, s)
-                results[dataset[0]][i].append(accuracy)
+                _, accuracy, _ = run_classifier(classifier, dataset[1], param, s)
+                results[dataset[0]][tuple(param.items())].append(accuracy)
     return results
 
-def plot_results(results, titles, x_ticks, window_title, param_name):
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-
-    for ax, (title, dataset_results) in zip(axes, results.items()):
-        ax.boxplot(dataset_results)
-        ax.set_title(title)
-        
-        tick_positions = range(1, len(x_ticks) + 1)
-        ax.set_xticks(tick_positions)
-        ax.set_xticklabels([f"{p}" for p in x_ticks])
-        ax.set_xlabel(param_name)
-
-    fig.suptitle(window_title, fontsize=16)
-    plt.tight_layout()
-    plt.savefig(f"results/{window_title.replace(' ', '_')}.png", bbox_inches='tight')
+def print_results(results):
+    for dataset, params_results in results.items():
+        print(f"\nResults for {dataset}:")
+        for param, accuracies in params_results.items():
+            mean_accuracy = np.mean(accuracies)
+            param_str = ", ".join([f"{k}={v}" for k, v in param])
+            print(f"  Param: {param_str}, Mean Accuracy: {mean_accuracy:.4f}")
+            for accuracy in accuracies:
+                print(f"    Accuracy: {accuracy:.4f}")
 
 def get_lowest_mean_values(results):
     lowest_means = {}
     for classifier_name, datasets in results.items():
-        for dataset_name, accuracies in datasets.items():
-            mean_accuracies = [np.mean(acc) for acc in accuracies]
+        for dataset_name, params_results in datasets.items():
+            mean_accuracies = [np.mean(acc) for acc in params_results.values()]
             max_mean = max(mean_accuracies)
             max_index = mean_accuracies.index(max_mean)
-            lowest_means[(classifier_name, dataset_name)] = (max_mean, max_index)
+            param_value = list(params_results.keys())[max_index]
+            lowest_means[(classifier_name, dataset_name)] = (max_mean, param_value)
     return lowest_means
 
 def main():
@@ -136,7 +133,7 @@ def main():
     for i, (name, clf_info) in enumerate(tqdm(classifiers_list, desc="Classifiers")):
         results = run_experiment(clf_info["classifier"], clf_info["params"], datasets, repeat_amount)
         all_results[name] = results
-        plot_results(results, [dataset[0] for dataset in datasets], [list(p.values())[0] for p in clf_info["params"]], name, clf_info["param_name"])
+        print_results(results)
         tqdm.write(f"Finished {name}")
 
     lowest_means = get_lowest_mean_values(all_results)
@@ -147,9 +144,8 @@ def main():
     for classifier_name in classifiers.keys():
         row = f"| {classifier_name:<19} |"
         for dataset_name in ["Steel Plates Fault", "Ionosphere", "Banknotes Authentication"]:
-            mean_value, param_index = lowest_means[(classifier_name, dataset_name)]
-            param_value = list(classifiers[classifier_name]["params"][param_index].values())[0]
-            row += f" {mean_value:.4f} ({param_value}) |"
+            mean_value, param_value = lowest_means[(classifier_name, dataset_name)]
+            row += f" {mean_value:.4f} ({', '.join([f'{k}={v}' for k, v in param_value])}) |"
         table += row + "\n"
 
     print(table)
